@@ -1,4 +1,4 @@
-# tdlib-telegram-bot-api-ghcr
+# telegram-bot-api-server
 
 自动追踪 [tdlib/telegram-bot-api](https://github.com/tdlib/telegram-bot-api) 上游 `HEAD`，并在发现新提交时构建镜像推送到 `ghcr.io`。
 

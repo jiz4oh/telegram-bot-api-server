@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: telegram-bot-api-ghcr
+  group: telegram-bot-api-server
   cancel-in-progress: false
 
 permissions:
