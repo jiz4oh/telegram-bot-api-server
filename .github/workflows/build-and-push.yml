@@ -1,0 +1,109 @@
+name: Build and Push tdlib telegram-bot-api
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: telegram-bot-api-ghcr
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: telegram-bot-api
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      upstream_sha: ${{ steps.upstream.outputs.sha }}
+      short_sha: ${{ steps.upstream.outputs.short_sha }}
+      should_build: ${{ steps.probe.outputs.should_build }}
+      image: ${{ steps.meta.outputs.image }}
+
+    steps:
+      - id: meta
+        name: Resolve image name
+        run: |
+          set -euo pipefail
+          echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+
+      - id: upstream
+        name: Resolve upstream HEAD
+        run: |
+          set -euo pipefail
+          sha="$(git ls-remote https://github.com/tdlib/telegram-bot-api.git HEAD | awk '{print $1}')"
+          short_sha="${sha:0:12}"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$short_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: probe
+        name: Check whether image tag exists
+        run: |
+          set -euo pipefail
+          image="${{ steps.meta.outputs.image }}"
+          tag="sha-${{ steps.upstream.outputs.short_sha }}"
+
+          if docker manifest inspect "${image}:${tag}" >/dev/null 2>&1; then
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+            echo "Image ${image}:${tag} already exists."
+          else
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "New upstream commit detected: ${tag}"
+          fi
+
+  build:
+    runs-on: ubuntu-latest
+    needs: resolve
+    if: needs.resolve.outputs.should_build == 'true'
+
+    steps:
+      - name: Checkout upstream source
+        uses: actions/checkout@v4
+        with:
+          repository: tdlib/telegram-bot-api
+          ref: ${{ needs.resolve.outputs.upstream_sha }}
+          path: source
+          submodules: recursive
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: build_meta
+        name: Build metadata
+        run: |
+          set -euo pipefail
+          echo "date=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: source
+          file: source/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ needs.resolve.outputs.image }}:latest
+            ${{ needs.resolve.outputs.image }}:sha-${{ needs.resolve.outputs.short_sha }}
+            ${{ needs.resolve.outputs.image }}:${{ steps.build_meta.outputs.date }}
