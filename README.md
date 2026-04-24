@@ -14,8 +14,8 @@
 
 ## 镜像地址
 
-- `ghcr.io/<owner>/telegram-bot-api:latest`
-- `ghcr.io/<owner>/telegram-bot-api:sha-xxxxxxxxxxxx`
+- `ghcr.io/<owner>/telegram-bot-api-server:latest`
+- `ghcr.io/<owner>/telegram-bot-api-server:sha-xxxxxxxxxxxx`
 
 ## 权限要求
 

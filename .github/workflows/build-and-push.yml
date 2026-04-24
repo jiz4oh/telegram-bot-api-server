@@ -67,6 +67,9 @@ jobs:
     if: needs.resolve.outputs.should_build == 'true'
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Checkout upstream source
         uses: actions/checkout@v4
         with:
@@ -74,9 +77,6 @@ jobs:
           ref: ${{ needs.resolve.outputs.upstream_sha }}
           path: source
           submodules: recursive
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
@@ -97,9 +97,10 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          context: source
+          context: .
+          file: ./Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: |
             ${{ needs.resolve.outputs.image }}:latest
             ${{ needs.resolve.outputs.image }}:sha-${{ needs.resolve.outputs.short_sha }}
