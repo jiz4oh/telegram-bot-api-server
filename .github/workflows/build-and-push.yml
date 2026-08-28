@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "*/30 * * * *"
   workflow_dispatch:
+    inputs:
+      force_build:
+        description: Build even when the upstream sha image exists
+        type: boolean
+        default: false
 
 concurrency:
   group: telegram-bot-api-server
@@ -64,7 +69,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: resolve
-    if: needs.resolve.outputs.should_build == 'true'
+    if: needs.resolve.outputs.should_build == 'true' || inputs.force_build
 
     steps:
       - name: Checkout repository
