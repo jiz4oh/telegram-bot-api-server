@@ -11,6 +11,7 @@
   - `latest`
   - `sha-<12位提交哈希>`
   - `<UTC日期，YYYYMMDD>`
+- 内置 gost 和 iptables 透明 SOCKS5 重定向层，由 `TGSOCKS_PROXY_HOST`、`TGSOCKS_PROXY_PORT` 控制
 
 ## 镜像地址
 
