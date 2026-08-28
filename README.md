@@ -1,12 +1,13 @@
 # telegram-bot-api-server
 
-自动追踪 [tdlib/telegram-bot-api](https://github.com/tdlib/telegram-bot-api) 上游 `HEAD`，并在发现新提交时构建镜像推送到 `ghcr.io`。
+通过 `source` submodule 固定 [tdlib/telegram-bot-api](https://github.com/tdlib/telegram-bot-api) 上游版本，并在每日同步发现新提交后构建镜像推送到 `ghcr.io`。
 
 ## 功能
 
-- 每 30 分钟检查一次上游 `HEAD`
-- 仅在新 `sha` 出现时触发构建
-- 推送多架构镜像：`linux/amd64`、`linux/arm64`
+- 每天同步一次上游 submodule
+- 上游 submodule 更新提交后自动触发构建
+- `main` 分支 push 和手动运行均可触发构建
+- 推送 `linux/amd64` 镜像
 - 推送标签：
   - `latest`
   - `sha-<12位提交哈希>`
